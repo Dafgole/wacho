@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wacho.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:#0C0C14;color:#EEEEF8;min-height:100vh;transition:background .25s,color .25s}
+  body.light{background:#F5F5FD;color:#111128}
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#20203A;border-radius:2px}
+  body.light ::-webkit-scrollbar-thumb{background:#DDDDF0}
+  .serif{font-family:'DM Serif Display',Georgia,serif}
+  button{cursor:pointer;font-family:'Inter',system-ui,sans-serif}
+  textarea{font-family:'Inter',system-ui,sans-serif}
+  input{font-family:'Inter',system-ui,sans-serif}
+  @keyframes blink{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+  @keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg{animation:fadeIn .2s ease}
+  .dot{width:6px;height:6px;border-radius:50%;background:#7C6AF7;display:inline-block;animation:blink 1.2s ease-in-out infinite}
+  .dot:nth-child(2){animation-delay:.2s}
+  .dot:nth-child(3){animation-delay:.4s}
+  .rec-pulse{animation:pulse 1s ease-in-out infinite}
+
+  /* SCREENS */
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex}
+
+  /* HOME & FORMS */
+  .center-screen{flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+  .card-wrap{width:100%;max-width:440px}
+
+  /* CHAT */
+  .chat-screen{flex-direction:column;max-width:680px;margin:0 auto;width:100%;height:100vh;overflow:hidden}
+  .topbar{padding:14px 20px;border-bottom:1px solid #20203A;display:flex;align-items:center;gap:12px;background:#111120;flex-shrink:0;transition:background .25s,border-color .25s}
+  body.light .topbar{background:#fff;border-color:#DDDDF0}
+  .messages{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:16px}
+  .msg-ai{align-self:flex-start;max-width:88%}
+  .msg-user{align-self:flex-end;max-width:88%}
+  .bubble{padding:13px 16px;font-size:14px;line-height:1.75}
+  .bubble-ai{background:#111120;border:1px solid #20203A;border-radius:16px 16px 16px 4px;color:#8888B0}
+  .bubble-user{background:#1A1835;border:1px solid #2E2A5A;border-radius:16px 16px 4px 16px;color:#EEEEF8}
+  body.light .bubble-ai{background:#fff;border-color:#DDDDF0;color:#55557A}
+  body.light .bubble-user{background:#E8E6FF;border-color:#C0BBF0;color:#111128}
+  .lbl{font-size:10px;color:#3A3A55;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+  body.light .lbl{color:#AAAACC}
+  .input-area{padding:12px 20px 20px;border-top:1px solid #20203A;background:#111120;flex-shrink:0;transition:background .25s,border-color .25s}
+  body.light .input-area{background:#fff;border-color:#DDDDF0}
+  .input-row{display:flex;gap:10px;align-items:flex-end}
+  textarea.main-input{flex:1;background:#16162A;border:1px solid #20203A;border-radius:12px;padding:12px 14px;color:#EEEEF8;font-size:14px;resize:none;outline:none;line-height:1.5;transition:border-color .15s;min-height:50px}
+  body.light textarea.main-input{background:#EDEDFA;border-color:#DDDDF0;color:#111128}
+  textarea.main-input:focus{border-color:#7C6AF7}
+  textarea.main-input.recording{border-color:#EF4444}
+  .btn-send,.btn-mic,.btn-icon{width:46px;height:46px;border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .15s}
+  .btn-send{background:#16162A;border:1px solid #20203A;color:#3A3A55}
+  .btn-send.active{background:#7C6AF7;border-color:#7C6AF7;color:#fff}
+  body.light .btn-send{background:#EDEDFA;border-color:#DDDDF0}
+  body.light .btn-send.active{background:#5B4FD6;border-color:#5B4FD6}
+  .btn-mic{background:#16162A;border:1px solid #20203A;color:#3A3A55}
+  .btn-mic.recording{background:#EF4444;border-color:#EF4444;color:#fff}
+  body.light .btn-mic{background:#EDEDFA;border-color:#DDDDF0}
+
+  /* PROFILE CARDS */
+  .profile-card{background:#16162A;border:1px solid #20203A;border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;width:100%;margin-bottom:10px}
+  .profile-card:hover{border-color:#7C6AF7;background:#1A1835}
+  body.light .profile-card{background:#EDEDFA;border-color:#DDDDF0}
+  body.light .profile-card:hover{border-color:#5B4FD6;background:#E8E6FF}
+  .profile-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .profile-card-dashed{background:none;border:1px dashed #20203A}
+  .profile-card-dashed:hover{border-color:#7C6AF7}
+  body.light .profile-card-dashed{border-color:#DDDDF0}
+
+  /* MODE CARDS */
+  .mode-card{background:#16162A;border:1px solid #20203A;border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;width:100%;margin-bottom:10px}
+  .mode-card:hover{border-color:#7C6AF7;background:#1A1835}
+  body.light .mode-card{background:#EDEDFA;border-color:#DDDDF0}
+  body.light .mode-card:hover{border-color:#5B4FD6;background:#E8E6FF}
+
+  /* TOGGLE */
+  .toggle-track{width:44px;height:24px;border-radius:20px;background:#20203A;border:none;position:relative;transition:background .2s;flex-shrink:0}
+  .toggle-track.on{background:#7C6AF7}
+  body.light .toggle-track{background:#DDDDF0}
+  body.light .toggle-track.on{background:#5B4FD6}
+  .toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s}
+  .toggle-track.on .toggle-thumb{left:23px}
+
+  /* PROGRESS BAR */
+  .progress-bar{display:flex;gap:6px;margin-bottom:32px}
+  .progress-seg{height:3px;flex:1;border-radius:2px;background:#20203A;transition:background .3s}
+  .progress-seg.done{background:#7C6AF7}
+  body.light .progress-seg{background:#DDDDF0}
+  body.light .progress-seg.done{background:#5B4FD6}
+
+  /* PREP PANEL */
+  .prep-panel{background:#1A1835;border-bottom:1px solid #2A2550;padding:12px 20px;display:grid;grid-template-columns:1fr 1fr;gap:5px 20px;flex-shrink:0}
+  body.light .prep-panel{background:#EAEAFF;border-color:#C0C0F0}
+
+  /* PROGRESS DOTS */
+  .qdot{width:5px;height:5px;border-radius:50%;background:#7C6AF7;display:inline-block}
+
+  /* UTIL */
+  .t-pri{color:#EEEEF8} body.light .t-pri{color:#111128}
+  .t-sec{color:#8888B0} body.light .t-sec{color:#55557A}
+  .t-mut{color:#3A3A55} body.light .t-mut{color:#AAAACC}
+  .t-acc{color:#7C6AF7} body.light .t-acc{color:#5B4FD6}
+  .bg-acc-dim{background:#1A1835} body.light .bg-acc-dim{background:#EAEAFF}
+  .bd-acc-dim{border-color:#2A2550} body.light .bd-acc-dim{border-color:#C8C4F8}
+  .hint-box{background:#1A1835;border:1px solid #2A2550;border-radius:10px;padding:14px 18px}
+  body.light .hint-box{background:#EAEAFF;border-color:#C8C4F8}
+  input.txt-input{width:100%;background:#16162A;border:1px solid #20203A;border-radius:12px;padding:14px 16px;color:#EEEEF8;font-size:16px;outline:none;transition:border-color .15s}
+  body.light input.txt-input{background:#EDEDFA;border-color:#DDDDF0;color:#111128}
+  input.txt-input:focus{border-color:#7C6AF7}
+  textarea.story-input{width:100%;background:#16162A;border:1px solid #20203A;border-radius:12px;padding:14px 16px;color:#EEEEF8;font-size:14px;resize:vertical;outline:none;line-height:1.6;min-height:120px;transition:border-color .15s}
+  body.light textarea.story-input{background:#EDEDFA;border-color:#DDDDF0;color:#111128}
+  textarea.story-input:focus{border-color:#7C6AF7}
+  .btn-primary{background:#7C6AF7;border:none;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:600;width:100%;transition:opacity .15s}
+  .btn-primary:disabled{opacity:.4;cursor:default}
+  body.light .btn-primary{background:#5B4FD6}
+  .btn-secondary{background:none;border:1px solid #20203A;border-radius:12px;padding:14px 18px;color:#3A3A55;font-size:13px}
+  body.light .btn-secondary{border-color:#DDDDF0;color:#AAAACC}
+  .btn-back{background:none;border:none;color:#3A3A55;font-size:13px;padding:0;margin-bottom:40px}
+  body.light .btn-back{color:#AAAACC}
+  .theme-btn{background:#16162A;border:1px solid #20203A;border-radius:8px;padding:6px 14px;color:#8888B0;font-size:12px}
+  body.light .theme-btn{background:#EDEDFA;border-color:#DDDDF0;color:#55557A}
+  .en-badge{margin-left:8px;font-size:10px;color:#7C6AF7;background:#1A1835;padding:2px 6px;border-radius:4px}
+  body.light .en-badge{background:#EAEAFF;color:#5B4FD6}
+  .mic-tip{font-size:11px;color:#3A3A55;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  body.light .mic-tip{color:#AAAACC}
+  .mic-tip.recording{color:#EF4444}
+  .hint-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  .prep-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 20px}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px}
+  .input-hint{font-size:10px;color:#3A3A55;margin-top:7px;text-align:center}
+  body.light .input-hint{color:#AAAACC}
+
+  @media(max-width:480px){
+    .card-wrap{max-width:100%}
+    .center-screen{padding:32px 16px}
+    .messages{padding:16px}
+    .topbar{padding:12px 16px;gap:8px}
+    .input-area{padding:10px 16px 16px}
+    .prep-grid{grid-template-columns:1fr}
+    .prep-panel{grid-template-columns:1fr}
+    h1.logo{font-size:44px}
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active center-screen" id="s-home">
+  <div class="card-wrap">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:48px">
+      <button class="theme-btn" onclick="toggleTheme()">☀ Claro</button>
+    </div>
+    <div style="margin-bottom:48px">
+      <h1 class="serif logo t-pri" style="font-size:56px;font-weight:800;letter-spacing:-2px;margin-bottom:6px">Wacho<span class="t-acc">.</span></h1>
+      <p class="t-sec" style="font-size:15px;line-height:1.7">Tu entrenador de entrevistas.<br/>Sin filtro. Sin validación fácil.</p>
+    </div>
+    <p class="t-mut eyebrow">¿Quién entrena hoy?</p>
+    <div id="profile-list">
+      <button class="profile-card" onclick="selectProfile('David', 'preset')">
+        <div class="profile-dot" style="background:#7C6AF7"></div>
+        <div style="flex:1">
+          <div class="t-pri" style="font-size:15px;font-weight:600;margin-bottom:2px">David</div>
+          <div class="t-mut" style="font-size:12px">Historias pre-cargadas · listo para practicar</div>
+        </div>
+        <span class="t-mut">→</span>
+      </button>
+    </div>
+    <button class="profile-card profile-card-dashed" onclick="goTo('s-name')">
+      <div class="profile-dot" style="border:2px dashed #3A3A55"></div>
+      <div style="flex:1">
+        <div class="t-sec" style="font-size:15px;font-weight:600;margin-bottom:2px">Perfil nuevo</div>
+        <div class="t-mut" style="font-size:12px">Carga tus historias y empieza</div>
+      </div>
+      <span class="t-mut">+</span>
+    </button>
+    <div class="hint-box" style="margin-top:8px">
+      <p class="t-acc hint-label">Framework PREP</p>
+      <div class="prep-grid">
+        <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">P</span> Point — directo</div>
+        <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">R</span> Reason — lógica</div>
+        <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">E</span> Example — real</div>
+        <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">P</span> Point — cierra</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAME -->
+<div class="screen center-screen" id="s-name">
+  <div class="card-wrap">
+    <button class="btn-back" onclick="goTo('s-home')">← Volver</button>
+    <h2 class="serif t-pri" style="font-size:28px;font-weight:700;margin-bottom:8px">¿Cómo te llamas?</h2>
+    <p class="t-sec" style="font-size:14px;margin-bottom:28px">Tu perfil se guarda — la próxima vez entras directo.</p>
+    <input class="txt-input" id="name-input" placeholder="Tu nombre" oninput="checkName()" onkeydown="if(event.key==='Enter')startOnboard()"/>
+    <div style="height:12px"></div>
+    <button class="btn-primary" id="btn-name" disabled onclick="startOnboard()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen center-screen" id="s-onboard">
+  <div class="card-wrap" style="max-width:480px">
+    <button class="btn-back" id="onboard-back" onclick="onboardBack()">← Atrás</button>
+    <div class="progress-bar" id="onboard-progress"></div>
+    <p class="t-acc eyebrow" id="onboard-label"></p>
+    <h2 class="serif t-pri" style="font-size:22px;font-weight:600;margin-bottom:16px;line-height:1.4" id="onboard-title">Carga tus historias reales</h2>
+    <p class="t-sec" style="font-size:14px;line-height:1.7;margin-bottom:20px;white-space:pre-line" id="onboard-q"></p>
+    <textarea class="story-input" id="onboard-input" rows="5"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-primary" id="onboard-next" onclick="onboardNext()">Siguiente →</button>
+      <button class="btn-secondary" onclick="onboardSkip()">Saltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODE SELECT -->
+<div class="screen center-screen" id="s-mode">
+  <div class="card-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:48px">
+      <button class="btn-back" style="margin-bottom:0" onclick="goTo('s-home')">← Cambiar perfil</button>
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn2">☀ Claro</button>
+    </div>
+    <div style="margin-bottom:36px">
+      <p class="t-sec" style="font-size:13px;margin-bottom:4px">Hola,</p>
+      <h2 class="serif t-pri" style="font-size:32px;font-weight:700;margin-bottom:4px" id="greet-name">David 👋</h2>
+      <p class="t-mut" style="font-size:13px">¿Qué practicamos hoy?</p>
+    </div>
+    <button class="mode-card" onclick="launchChat('assessment')">
+      <span class="t-acc" style="font-size:20px">◎</span>
+      <div style="flex:1">
+        <div class="t-pri" style="font-size:15px;font-weight:600;margin-bottom:2px">Assessment <span class="en-badge" id="en-badge" style="display:none">EN</span></div>
+        <div class="t-mut" style="font-size:12px">Estrategia & criterio</div>
+      </div>
+      <span class="t-mut">→</span>
+    </button>
+    <button class="mode-card" onclick="launchChat('metricas')">
+      <span class="t-acc" style="font-size:20px">▲</span>
+      <div style="flex:1">
+        <div class="t-pri" style="font-size:15px;font-weight:600;margin-bottom:2px">Métricas</div>
+        <div class="t-mut" style="font-size:12px">Usa los números</div>
+      </div>
+      <span class="t-mut">→</span>
+    </button>
+    <button class="mode-card" onclick="launchChat('historias')">
+      <span class="t-acc" style="font-size:20px">◆</span>
+      <div style="flex:1">
+        <div class="t-pri" style="font-size:15px;font-weight:600;margin-bottom:2px">Historias</div>
+        <div class="t-mut" style="font-size:12px">PREP en acción</div>
+      </div>
+      <span class="t-mut">→</span>
+    </button>
+    <div style="background:#16162A;border:1px solid #20203A;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between" id="en-toggle-wrap">
+      <div>
+        <div class="t-pri" style="font-size:13px;font-weight:600">English mode</div>
+        <div class="t-mut" style="font-size:11px">Assessment en inglés — nivel difícil</div>
+      </div>
+      <button class="toggle-track" id="en-toggle" onclick="toggleLang()"><div class="toggle-thumb"></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen chat-screen" id="s-chat">
+  <div class="topbar">
+    <button style="background:none;border:none;color:#3A3A55;font-size:18px;padding:0;line-height:1" onclick="goTo('s-mode')">←</button>
+    <span class="t-acc" style="font-size:18px" id="chat-icon">◎</span>
+    <div style="flex:1">
+      <div class="t-pri" style="font-size:14px;font-weight:600" id="chat-title">Assessment</div>
+      <div class="t-mut" style="font-size:11px" id="chat-sub">0 respuestas</div>
+    </div>
+    <div style="display:flex;gap:3px" id="qdots"></div>
+    <button style="background:#1A1835;border:1px solid #2A2550;border-radius:6px;color:#8888B0;font-size:11px;padding:5px 10px;font-weight:600" id="prep-btn" onclick="togglePrep()">PREP</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn3">☀</button>
+  </div>
+  <div class="prep-panel" id="prep-panel" style="display:none">
+    <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">P</span> Point — directo</div>
+    <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">R</span> Reason — lógica</div>
+    <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">E</span> Example — real</div>
+    <div style="font-size:12px" class="t-sec"><span class="t-acc" style="font-weight:700">P</span> Point — cierra</div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="input-area">
+    <div class="mic-tip" id="mic-tip">🎙 Graba tu respuesta antes de tipear — así entrenas como en la entrevista real</div>
+    <div class="input-row">
+      <button class="btn-mic" id="btn-mic" onclick="toggleMic()" title="Grabar respuesta">🎙</button>
+      <textarea class="main-input" id="main-input" rows="2" placeholder="Responde aquí… o usa el micrófono 🎙" onkeydown="handleKey(event)" oninput="checkSend()"></textarea>
+      <button class="btn-send" id="btn-send" onclick="sendMsg()">↑</button>
+    </div>
+    <p class="input-hint">Enter envía · Shift+Enter nueva línea</p>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const state = {
+  theme: 'dark',
+  userName: '',
+  stories: { story1:'', story2:'', justification:'' },
+  mode: 'assessment',
+  lang: 'es',
+  messages: [],
+  qCount: 0,
+  usedQuestions: [],
+  isRecording: false,
+  loading: false,
+  onboardStep: 0,
+  recognition: null,
+  finalTranscript: '',
+};
+
+// ── DAVID PRESET ───────────────────────────────────────────────────────────
+const DAVID = {
+  story1: 'GM/Carat Ecuador: Manejé el programa de concesionarios de GM. El modelo era que Colombia lideraba todo para Latam pero el cliente en Ecuador estaba insatisfecho. Me pidieron construir un business case para separar el equipo. Tuve que contradecir presentaciones de Colombia cuando no servían al cliente, rehacerlas con nuestro enfoque, y demostrar con resultados que hacíamos mejor las cosas. Resultado: récords de venta, 6 de 15 concesionarios el primer año, equipo propio de 10 personas. Los resultados son el único argumento que mueve estructuras.',
+  story2: 'Gobernanza de nomenclatura: Diseñé sistema completo — componentes en Figma, app que genera tags, capacitaciones por equipo. Aparecieron 492 anuncios con nomenclatura incorrecta y me pidieron más cambios al proceso. Decidí NO hacerlos — el diseño estaba completo, el problema era disciplina de ejecución. Ofrecí reuniones de refuerzo y reporte mensual de errores. En roles transversales, saber hasta dónde llega tu responsabilidad es tan importante como construir bien el sistema.',
+  justification: 'Busco visibilidad estratégica que mi rol actual no me da. Crecí de analista a construir el sistema de governance de medición desde cero, pero ese expertise me encasilla. Quiero estar donde las decisiones se toman mirando al cliente. Alto Valor me atrae porque entiendo el lenguaje financiero — invierto en bolsa, estudié finanzas post-MBA. No es un paso atrás — es una inversión en el profesional que quiero ser.',
+};
+
+// ── QUESTION BANKS ─────────────────────────────────────────────────────────
+const QUESTIONS = {
+  assessment_es: [
+    "Un cliente Alto Valor lleva 5 años en el segmento, tiene 4 productos activos, pero este trimestre su rentabilidad bajó 30%. ¿Cómo analizas la situación y qué haces?",
+    "¿Cómo definirías el segmento de Alto Valor y qué criterios usarías para identificar a un cliente que debería estar ahí pero todavía no está siendo atendido como tal?",
+    "Tienes dos subsegmentos: clientes de 35-45 años con alto ingreso pero baja antigüedad, y clientes de 55-65 con alta antigüedad pero baja transaccionalidad digital. Presupuesto limitado. ¿En cuál inviertes primero?",
+    "Un cliente Alto Valor te dice que prefiere la competencia porque ofrece mejor tasa de rendimiento en inversiones. ¿Cómo lo manejas?",
+    "Tienes 15,000 clientes Alto Valor. El 40% no tiene ningún producto de inversión. ¿Qué harías para activarlos y cómo medirías el éxito?",
+    "Un asesor te dice que sus clientes se quejan de que la app es mala y por eso no invierten digitalmente. ¿Cómo manejas eso desde tu rol?",
+    "Estás desarrollando una propuesta de valor nueva. Producto dice que tiene el roadmap lleno. Marketing dice que no tiene presupuesto. ¿Qué haces?",
+    "¿Cuál es la diferencia entre una estrategia de segmentos y una estrategia de producto? ¿Dónde chocan dentro de una institución financiera?",
+    "¿Cómo medirías el éxito de tu gestión como especialista de Alto Valor al cabo de 6 meses?",
+    "Un cliente Alto Valor lleva 10 años en la institución, tiene 5 productos activos, pero su NPS es detractor. ¿Qué haces?",
+    "Un cliente Alto Valor en los últimos 3 meses aumentó sus transferencias salientes a otra institución en 60%. No ha cerrado ningún producto. ¿Qué está pasando y qué haces?",
+    "¿Cómo definirías principalidad y cómo la medirías con datos concretos?",
+    "Tu gerente te pide un reporte del estado actual del segmento Alto Valor. ¿Qué le presentas y con qué números?",
+    "¿Cómo construirías una propuesta de valor diferenciada para un cliente que ya tiene productos en tres instituciones distintas?",
+    "Explica la diferencia entre Alto Valor y Banca Empresa. ¿Qué implicaciones tiene para la estrategia de cada segmento?",
+    "Un cliente Alto Valor tiene AUM alto contigo pero wallet share bajo. ¿Qué significa y qué harías?",
+    "¿Cómo priorizarías entre retener a un cliente Alto Valor en riesgo de fuga versus activar a uno nuevo que acaba de entrar al segmento?",
+    "Tienes evidencia de que el 30% de tus clientes Alto Valor están siendo contactados activamente por asesores de la competencia. ¿Qué estrategia diseñas?",
+    "¿Cómo manejas la tensión entre lo que el asesor quiere vender y lo que realmente necesita el cliente?",
+    "Un cliente Alto Valor quiere invertir en un producto de alto riesgo que tú crees que no se alinea con su perfil. ¿Cómo lo manejas?",
+    "¿Cómo usarías los datos de transaccionalidad para identificar oportunidades de cross-sell en el segmento?",
+    "Describe cómo sería tu primera semana en el rol. ¿Qué harías antes de proponer cualquier iniciativa?",
+    "¿Qué KPIs le pondrías a un asesor de Alto Valor y por qué esos específicamente?",
+    "¿Cómo diseñarías el journey de onboarding para un cliente nuevo que acaba de entrar al segmento Alto Valor?",
+    "¿Cuál es el mayor riesgo de gestionar un segmento de Alto Valor y cómo lo mitigarías?",
+    "Tienes un cliente que tiene más del 80% de su patrimonio en una sola clase de activo. ¿Qué conversación tienes con él?",
+    "¿Cómo medirías el impacto de una campaña de retención en el segmento Alto Valor?",
+    "¿Qué harías si descubres que hay clientes que califican para Alto Valor pero siguen siendo atendidos como clientes masivos?",
+    "¿Cómo manejarías un conflicto entre el área de riesgo y tu estrategia de segmentos cuando riesgo quiere ser más conservador?",
+    "Tu segmento creció en número de clientes pero los ingresos bajaron. ¿Qué le dices a tu gerente?",
+    "¿Cómo diferencias a un cliente que está satisfecho de uno que está leal? ¿Por qué importa esa diferencia?",
+    "¿Qué rol juega el asesor personal en la estrategia digital de un segmento de Alto Valor?",
+    "Describe un modelo híbrido de atención para Alto Valor que combine digital y humano. ¿Cuándo usa cada canal?",
+    "¿Cómo construirías un business case para invertir en un nuevo beneficio para el segmento Alto Valor?",
+    "¿Qué información necesitarías para determinar si vale la pena crear un sub-segmento dentro de Alto Valor?",
+    "Un cliente Alto Valor heredó una suma importante. ¿Cómo lo abordas desde el segmento?",
+    "¿Cómo usarías el NPS para mejorar la estrategia del segmento, más allá de solo medirlo?",
+    "¿Qué harías si el churn del segmento Alto Valor sube 3 puntos en un trimestre sin una razón obvia?",
+    "¿Cómo priorizas entre profundizar la relación con clientes actuales versus atraer nuevos clientes al segmento?",
+    "¿Cuál es el switching cost para un cliente Alto Valor y cómo lo usas como argumento de retención?",
+    "¿Cómo explicarías el concepto de CLV a un colega que no es de datos?",
+    "¿Qué harías si descubres que los clientes Alto Valor más rentables tienen el NPS más bajo?",
+    "¿Cómo diseñarías una estrategia para que un cliente pase de ser ocasional a ser tu cliente principal?",
+    "¿Qué aprendiste de una iniciativa que no funcionó como esperabas?",
+    "¿Por qué quieres este rol y qué te diferencia de otros candidatos con más experiencia directa en segmentos?"
+  ],
+  assessment_en: [
+    "A High-Value client has been with the institution for 5 years, has 4 active products, but their profitability dropped 30% this quarter. How do you analyze this and what do you do?",
+    "How would you define the High-Value segment and what criteria would you use to identify clients who should be there but aren't being served as such?",
+    "You have two sub-segments: clients 35-45 with high income but low tenure, and clients 55-65 with high tenure but low digital activity. Limited budget. Which do you invest in first?",
+    "A High-Value client says they prefer a competitor because of better investment returns. How do you handle that?",
+    "You have 15,000 High-Value clients. 40% have no investment products. What do you do to activate them and how do you measure success?",
+    "An advisor tells you clients complain the app is bad and that's why they don't invest digitally. How do you handle that from your role?",
+    "You're developing a new value proposition. Product says the roadmap is full. Marketing says no budget. What do you do?",
+    "What's the difference between a segment strategy and a product strategy? Where do they clash?",
+    "How would you measure your success as a High-Value Segments specialist after 6 months?",
+    "A High-Value client has been with the institution 10 years, has 5 active products, but their NPS is detractor. What do you do?",
+    "A High-Value client's outgoing transfers to another institution increased 60% over 3 months. No products closed. What's happening and what do you do?",
+    "How do you define principality and how would you measure it with concrete data?",
+    "Your manager asks for a status report on the High-Value segment. What do you present and with what numbers?",
+    "How would you build a differentiated value proposition for a client who already has products at three different institutions?",
+    "A client's AUM with you is high but their wallet share is low. What does that mean and what would you do?",
+    "How do you prioritize between retaining a High-Value client at risk of leaving versus activating a new one who just entered the segment?",
+    "You have evidence that 30% of your High-Value clients are being actively approached by competitors. What strategy do you design?",
+    "How do you handle the tension between what the advisor wants to sell and what the client actually needs?",
+    "What KPIs would you set for a High-Value advisor and why those specifically?",
+    "Your segment grew in number of clients but revenue dropped. What do you tell your manager?",
+    "What's the switching cost for a High-Value client and how do you use it as a retention argument?",
+    "How would you explain CLV to a colleague who isn't data-oriented?",
+    "What would you do if the highest-revenue High-Value clients also have the lowest NPS?",
+    "Why do you want this role and what differentiates you from candidates with more direct segment experience?",
+    "How would you use transactional data to identify cross-sell opportunities in the segment?"
+  ],
+  metricas: [
+    "Tu gerente te pregunta por qué el segmento creció en número de clientes pero los ingresos bajaron. ¿Qué métricas revisas y qué le dices?",
+    "Un cliente lleva 8 años, tiene cuenta corriente e hipotecario, pero bajó su saldo promedio 40% y canceló su tarjeta. ¿Qué te dicen esos datos?",
+    "¿Cómo medirías la principalidad de un cliente? ¿Qué datos concretos usarías?",
+    "Un gerente te pregunta cuál es el costo de perder un cliente Alto Valor versus adquirir uno nuevo. ¿Cómo lo explicas con números?",
+    "Tienes un cliente con AUM alto pero wallet share bajo. ¿Cómo lo detectas y qué significa?",
+    "¿Qué es wallet share, cómo se calcula y por qué importa más que el saldo absoluto en Alto Valor?",
+    "El churn del segmento subió 3 puntos este trimestre. ¿Cuáles son las primeras 3 métricas que revisas y en qué orden?",
+    "Un cliente tiene NPS detractor pero lleva 10 años y tiene 5 productos activos. ¿Qué métricas revisas primero?",
+    "¿Cómo construirías un dashboard de seguimiento mensual para el segmento Alto Valor? ¿Qué métricas incluyes y por qué?",
+    "Explica la diferencia entre tasa de activación y tasa de conversión en el contexto de un segmento premium.",
+    "¿Cómo usarías el CLV para decidir cuánto invertir en retener a un cliente específico?",
+    "El NPS subió pero el churn también subió. ¿Cómo explicas esa aparente contradicción?",
+    "¿Qué métricas usarías para medir el impacto de un nuevo beneficio que lanzaste al segmento?",
+    "Un cliente tiene 6 productos activos pero su transaccionalidad mensual es casi cero. ¿Qué significa eso?",
+    "¿Cómo diferencias entre un cliente satisfecho y un cliente leal usando datos?",
+    "Tienes datos de que el 25% de tus clientes Alto Valor reciben su sueldo en otra institución. ¿Qué métrica te importa más y qué harías?",
+    "¿Cómo calcularías el ROI de una campaña de retención en el segmento Alto Valor?",
+    "Un cliente nuevo entró al segmento hace 6 meses. ¿Qué métricas revisas para saber si la relación está madurando bien?",
+    "¿Qué es el switching cost y cómo lo estimarías para un cliente con hipoteca, tarjeta e inversiones contigo?",
+    "El saldo promedio del segmento bajó pero el número de productos activos subió. ¿Cómo interpretas eso?",
+    "¿Cómo usarías los datos de transferencias salientes para anticipar una fuga antes de que ocurra?",
+    "Tienes que presentar el desempeño del segmento en 3 números solamente. ¿Cuáles eliges y por qué?",
+    "¿Qué métrica te daría la señal más temprana de que un cliente Alto Valor está considerando irse?",
+    "¿Cómo medirías si un asesor está gestionando bien su cartera de clientes Alto Valor?",
+    "Un cliente tiene bajo AUM pero alta frecuencia de transacciones. ¿Es un buen cliente? ¿Cómo lo evalúas?"
+  ],
+  historias: [
+    "Cuéntame de una vez que tuviste que trabajar en contra de una estructura establecida o de alguien con más poder que tú.",
+    "Describe una situación donde tuviste que tomar una decisión difícil con información incompleta.",
+    "Cuéntame de un logro del que estés orgulloso y que puedas defender con números concretos.",
+    "¿Cuándo tuviste que decirle a alguien con más autoridad que estaban equivocados? ¿Cómo lo manejaste?",
+    "Describe una situación donde tuviste que trabajar con equipos de diferentes áreas que no estaban alineados.",
+    "Cuéntame de una vez que un proyecto o iniciativa tuya no funcionó. ¿Qué aprendiste?",
+    "¿Cuándo tuviste que defender tu criterio aunque el equipo pensaba diferente?",
+    "Describe una situación donde tuviste que priorizar entre varias demandas urgentes al mismo tiempo.",
+    "Cuéntame de una vez que construiste algo desde cero sin tener todos los recursos que necesitabas.",
+    "¿Cuándo tuviste que convencer a alguien escéptico de una idea tuya? ¿Cómo lo lograste?",
+    "Describe una situación donde tuviste que dar feedback difícil a alguien.",
+    "Cuéntame de una vez que tuviste que adaptarte rápido a un cambio inesperado.",
+    "¿Cuándo tomaste una decisión que generó tensión pero que en retrospectiva fue la correcta?",
+    "Describe una situación donde tuviste que entregar resultados bajo presión de tiempo.",
+    "Cuéntame de una iniciativa que propusiste y que al final no fue aprobada. ¿Cómo lo manejaste?",
+  ]
+};
+
+// ── STORAGE ────────────────────────────────────────────────────────────────
+function saveProfiles(profiles) {
+  try { localStorage.setItem('wacho_profiles', JSON.stringify(profiles)); } catch(e){}
+}
+function loadProfiles() {
+  try { return JSON.parse(localStorage.getItem('wacho_profiles') || '{}'); } catch{ return {}; }
+}
+function loadSavedProfiles() {
+  const profiles = loadProfiles();
+  const list = document.getElementById('profile-list');
+  // Remove old saved cards
+  list.querySelectorAll('.saved-profile').forEach(el => el.remove());
+  Object.keys(profiles).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'profile-card saved-profile';
+    btn.innerHTML = `<div class="profile-dot" style="background:#22CC88"></div><div style="flex:1"><div class="t-pri" style="font-size:15px;font-weight:600;margin-bottom:2px">${name}</div><div class="t-mut" style="font-size:12px">Perfil guardado · historias cargadas</div></div><span class="t-mut">→</span>`;
+    btn.onclick = () => selectProfile(name, 'saved');
+    list.appendChild(btn);
+  });
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id === 's-home') loadSavedProfiles();
+}
+
+// ── THEME ──────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('light', state.theme === 'light');
+  const label = state.theme === 'dark' ? '☀ Claro' : '◑ Oscuro';
+  ['theme-btn','theme-btn2','theme-btn3'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = id === 'theme-btn3' ? (state.theme === 'dark' ? '☀' : '◑') : label;
+  });
+}
+
+// ── PROFILES ───────────────────────────────────────────────────────────────
+function selectProfile(name, type) {
+  state.userName = name;
+  if(type === 'preset') {
+    state.stories = {...DAVID};
+  } else if(type === 'saved') {
+    const profiles = loadProfiles();
+    state.stories = profiles[name] || {story1:'',story2:'',justification:''};
+  }
+  document.getElementById('greet-name').textContent = name + ' 👋';
+  goTo('s-mode');
+}
+
+// ── NAME ───────────────────────────────────────────────────────────────────
+function checkName() {
+  const val = document.getElementById('name-input').value.trim();
+  document.getElementById('btn-name').disabled = !val;
+}
+function startOnboard() {
+  const name = document.getElementById('name-input').value.trim();
+  if(!name) return;
+  state.userName = name;
+  state.stories = {story1:'',story2:'',justification:''};
+  state.onboardStep = 0;
+  renderOnboardStep();
+  goTo('s-onboard');
+}
+
+// ── ONBOARDING ─────────────────────────────────────────────────────────────
+const ONBOARD_STEPS = [
+  { key:'story1', label:'Historia 1 de 2', q:'¿Cuál fue una situación donde tuviste que defender tu criterio o trabajar en contra de algo establecido?\n\nEscríbela como te salga — sin estructura, yo armo todo después.', ph:'Ej: Llegué a un proyecto que llevaba meses sin funcionar y tuve que...' },
+  { key:'story2', label:'Historia 2 de 2', q:'¿Cuándo tuviste que decidir hasta dónde llegaba tu responsabilidad? O un logro con resultado medible.', ph:'Ej: Diseñé un sistema completo pero el equipo no lo adoptaba...' },
+  { key:'justification', label:'Por qué quieres el rol', q:'¿Qué buscas que no tienes ahora? ¿Por qué este rol específicamente?\n\nSé honesto.', ph:'Ej: Busco más visibilidad estratégica...' },
+];
+function renderOnboardStep() {
+  const step = ONBOARD_STEPS[state.onboardStep];
+  document.getElementById('onboard-label').textContent = step.label;
+  document.getElementById('onboard-title').textContent = `Hola ${state.userName}, carga tus historias`;
+  document.getElementById('onboard-q').textContent = step.q;
+  document.getElementById('onboard-input').value = state.stories[step.key] || '';
+  document.getElementById('onboard-input').placeholder = step.ph;
+  document.getElementById('onboard-next').textContent = state.onboardStep === ONBOARD_STEPS.length-1 ? 'Guardar y empezar →' : 'Siguiente →';
+  const prog = document.getElementById('onboard-progress');
+  prog.innerHTML = ONBOARD_STEPS.map((_,i) => `<div class="progress-seg${i<=state.onboardStep?' done':''}"></div>`).join('');
+}
+function saveCurrentOnboardStep() {
+  const step = ONBOARD_STEPS[state.onboardStep];
+  state.stories[step.key] = document.getElementById('onboard-input').value.trim();
+}
+function onboardNext() {
+  saveCurrentOnboardStep();
+  if(state.onboardStep < ONBOARD_STEPS.length-1) {
+    state.onboardStep++;
+    renderOnboardStep();
+  } else {
+    finishOnboard();
+  }
+}
+function onboardSkip() {
+  if(state.onboardStep < ONBOARD_STEPS.length-1) {
+    state.onboardStep++;
+    renderOnboardStep();
+  } else { finishOnboard(); }
+}
+function onboardBack() {
+  if(state.onboardStep === 0) goTo('s-name');
+  else { state.onboardStep--; renderOnboardStep(); }
+}
+function finishOnboard() {
+  const profiles = loadProfiles();
+  profiles[state.userName] = state.stories;
+  saveProfiles(profiles);
+  document.getElementById('greet-name').textContent = state.userName + ' 👋';
+  goTo('s-mode');
+}
+
+// ── LANG TOGGLE ────────────────────────────────────────────────────────────
+function toggleLang() {
+  state.lang = state.lang === 'es' ? 'en' : 'es';
+  const tog = document.getElementById('en-toggle');
+  const badge = document.getElementById('en-badge');
+  tog.classList.toggle('on', state.lang === 'en');
+  badge.style.display = state.lang === 'en' ? 'inline' : 'none';
+  document.getElementById('main-input').placeholder = state.lang === 'en' ? 'Answer here… or use the mic 🎙' : 'Responde aquí… o usa el micrófono 🎙';
+}
+
+// ── CHAT LAUNCH ────────────────────────────────────────────────────────────
+const ICONS = { assessment:'◎', metricas:'▲', historias:'◆' };
+const LABELS = { assessment:'Assessment', metricas:'Métricas', historias:'Historias' };
+function launchChat(mode) {
+  state.mode = mode;
+  state.messages = [];
+  state.qCount = 0;
+  state.usedQuestions = [];
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('chat-icon').textContent = ICONS[mode];
+  document.getElementById('chat-title').innerHTML = LABELS[mode] + (state.lang==='en' && mode==='assessment' ? ' <span class="en-badge">EN</span>' : '');
+  document.getElementById('chat-sub').textContent = state.userName;
+  updateQdots();
+  goTo('s-chat');
+  // First question
+  const firstQ = getQuestion(mode);
+  const lang = state.lang;
+  const intro = mode === 'historias'
+    ? (state.stories.story1 || state.stories.story2
+        ? `Modo **Historias** activado. Usa PREP y una de tus historias reales.\n\n**Primera pregunta:**\n\n${firstQ}`
+        : `Modo **Historias** activado. No cargaste historias — sin problema, las construimos ahora.\n\nCuéntame: ¿cuál fue la situación más difícil que enfrentaste en tu carrera?`)
+    : `Modo **${LABELS[mode]}** activado${lang==='en'?' · English mode on':''}.\n\n**${lang==='en'?'First question':'Primera pregunta'}:**\n\n${firstQ}`;
+  addMessage('assistant', intro);
+}
+
+// ── QUESTION PICKER ────────────────────────────────────────────────────────
+function getQuestion(mode) {
+  let bank;
+  if(mode === 'assessment') bank = state.lang === 'en' ? QUESTIONS.assessment_en : QUESTIONS.assessment_es;
+  else if(mode === 'metricas') bank = QUESTIONS.metricas;
+  else bank = QUESTIONS.historias;
+  const available = bank.filter((_,i) => !state.usedQuestions.includes(mode+'_'+i));
+  if(available.length === 0) { state.usedQuestions = []; return bank[Math.floor(Math.random()*bank.length)]; }
+  const idx = Math.floor(Math.random()*available.length);
+  const realIdx = bank.indexOf(available[idx]);
+  state.usedQuestions.push(mode+'_'+realIdx);
+  return available[idx];
+}
+
+// ── MESSAGES ───────────────────────────────────────────────────────────────
+function addMessage(role, content) {
+  state.messages.push({role, content});
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (role==='user' ? 'msg-user' : 'msg-ai');
+  if(role==='assistant') {
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = 'Wacho';
+    wrap.appendChild(lbl);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (role==='user' ? 'bubble-user' : 'bubble-ai');
+  bubble.innerHTML = formatText(content);
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg msg-ai';
+  wrap.id = 'typing-indicator';
+  const lbl = document.createElement('div');
+  lbl.className = 'lbl';
+  lbl.textContent = 'Wacho';
+  wrap.appendChild(lbl);
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble bubble-ai';
+  bubble.style.display = 'inline-flex';
+  bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+function formatText(text) {
+  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
+}
+
+// ── SEND ───────────────────────────────────────────────────────────────────
+function checkSend() {
+  const val = document.getElementById('main-input').value.trim();
+  const btn = document.getElementById('btn-send');
+  btn.classList.toggle('active', !!val);
+}
+function handleKey(e) {
+  if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+async function sendMsg() {
+  const input = document.getElementById('main-input');
+  const text = input.value.trim();
+  if(!text || state.loading) return;
+  if(state.isRecording) stopMic();
+  addMessage('user', text);
+  input.value = '';
+  checkSend();
+  state.loading = true;
+  state.qCount++;
+  updateQdots();
+  updateSub();
+  showTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system: buildPrompt(),
+        messages: state.messages.map(m => ({role:m.role, content:m.content}))
+      })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = data.content?.[0]?.text || 'Error al procesar.';
+    addMessage('assistant', reply);
+    state.messages.push({role:'assistant', content:reply});
+  } catch(e) {
+    removeTyping();
+    addMessage('assistant', 'Error de conexión. Intenta de nuevo.');
+  }
+  state.loading = false;
+}
+function updateSub() {
+  const n = state.qCount;
+  document.getElementById('chat-sub').textContent = n > 0 ? `${n} respuesta${n>1?'s':''}` : state.userName;
+}
+function updateQdots() {
+  const el = document.getElementById('qdots');
+  const n = Math.min(state.qCount, 10);
+  el.innerHTML = Array.from({length:n}).map((_,i) => `<div class="qdot" style="opacity:${0.2+(i/Math.max(n-1,1))*0.8}"></div>`).join('');
+}
+
+// ── SYSTEM PROMPT ──────────────────────────────────────────────────────────
+function buildPrompt() {
+  const s = state.stories;
+  const storiesCtx = s.story1 || s.story2
+    ? `\n\nHISTORIAS REALES DEL USUARIO:\nHistoria 1: ${s.story1}\nHistoria 2: ${s.story2}\n${s.justification ? 'Por qué quiere el rol: ' + s.justification : ''}`
+    : '\n\nEl usuario no tiene historias cargadas. Ayúdalo a construir una.';
+  const isEn = state.lang === 'en';
+  return `Eres un entrenador de entrevistas brutalmente honesto para ${state.userName}, preparándose para un assessment de Especialista en Segmentos de Alto Valor en una institución financiera.
+
+ROL OBJETIVO: Alto Valor = clientes personas naturales de alto ingreso y patrimonio. Diferente a segmento empresarial (entidad jurídica). Competencias clave: estrategia de segmentos, métricas, gestión de relaciones, propuesta de valor, trabajo transversal.
+${storiesCtx}
+
+FRAMEWORK PREP: P(Point directo) → R(Reason/lógica) → E(Example real propio) → P(Point cierre firme)
+
+MÉTRICAS CLAVE:
+- AUM: total activos administrados con la institución
+- Wallet share: % del dinero total del cliente con la institución
+- Principalidad: si eres la institución primaria (nómina, tarjeta diaria, inversiones principales)
+- CLV: valor total durante la relación
+- Churn rate: tasa de abandono del segmento
+- NPS: satisfacción y lealtad
+- Penetración: % del universo potencial captado
+- Productos activos: profundidad de relación
+- CAC: costo de adquisición de cliente
+- Switching cost: costo que tiene el cliente de irse
+- Saldo promedio mensual: liquidez promedio
+
+REGLAS DE FEEDBACK:
+1. Qué estuvo bien — máximo 3 puntos concretos
+2. Qué faltó — máximo 2 puntos, directo y sin suavizar
+3. Cómo sonaría mejor — versión mejorada con estructura PREP
+Después del feedback, lanza la siguiente pregunta directamente sin preguntar si quieren continuar.
+
+MODO: ${state.mode} | IDIOMA: ${isEn ? 'inglés — responde en inglés' : 'español'}
+${state.mode==='assessment' ? 'Preguntas de estrategia, cliente, conflictos organizacionales, criterio de negocio, comportamiento.' : ''}
+${state.mode==='metricas' ? 'Situaciones donde el usuario DEBE usar métricas específicas en contexto, no definirlas como diccionario.' : ''}
+${state.mode==='historias' ? 'Preguntas de comportamiento para practicar historias con PREP. Evalúa si usó la estructura correctamente.' : ''}
+Una pregunta por turno. No repitas ángulos. Varía el tipo de pregunta.`;
+}
+
+// ── PREP PANEL ─────────────────────────────────────────────────────────────
+let prepVisible = false;
+function togglePrep() {
+  prepVisible = !prepVisible;
+  document.getElementById('prep-panel').style.display = prepVisible ? 'grid' : 'none';
+  document.getElementById('prep-btn').style.background = prepVisible ? '#1A1835' : 'none';
+  document.getElementById('prep-btn').style.color = prepVisible ? '#7C6AF7' : '#8888B0';
+  document.getElementById('prep-btn').style.borderColor = prepVisible ? '#7C6AF7' : '#2A2550';
+}
+
+// ── MIC ────────────────────────────────────────────────────────────────────
+const micSupported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+if(!micSupported) {
+  // Hide mic button if not supported, will show after DOM loads
+  window.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btn-mic');
+    if(btn) btn.style.display = 'none';
+    const tip = document.getElementById('mic-tip');
+    if(tip) tip.style.display = 'none';
+  });
+}
+function toggleMic() {
+  if(state.isRecording) stopMic();
+  else startMic();
+}
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  const rec = new SR();
+  rec.lang = state.lang === 'en' ? 'en-US' : 'es-EC';
+  rec.continuous = true;
+  rec.interimResults = true;
+  state.finalTranscript = '';
+  rec.onresult = (e) => {
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++) {
+      if(e.results[i].isFinal) state.finalTranscript += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('main-input').value = state.finalTranscript + interim;
+    checkSend();
+  };
+  rec.onerror = () => stopMic();
+  rec.onend = () => { if(state.isRecording) stopMic(); };
+  state.recognition = rec;
+  rec.start();
+  state.isRecording = true;
+  document.getElementById('btn-mic').classList.add('recording');
+  document.getElementById('btn-mic').textContent = '⏹';
+  document.getElementById('main-input').classList.add('recording');
+  const tip = document.getElementById('mic-tip');
+  tip.textContent = '⏺ Grabando… habla con calma. Toca el botón para parar.';
+  tip.classList.add('recording');
+}
+function stopMic() {
+  if(state.recognition) { try{ state.recognition.stop(); }catch(e){} state.recognition = null; }
+  state.isRecording = false;
+  document.getElementById('btn-mic').classList.remove('recording');
+  document.getElementById('btn-mic').textContent = '🎙';
+  document.getElementById('main-input').classList.remove('recording');
+  const tip = document.getElementById('mic-tip');
+  tip.textContent = '🎙 Graba tu respuesta antes de tipear — así entrenas como en la entrevista real';
+  tip.classList.remove('recording');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadSavedProfiles();
+  if(!micSupported) {
+    document.getElementById('btn-mic').style.display = 'none';
+    document.getElementById('mic-tip').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
